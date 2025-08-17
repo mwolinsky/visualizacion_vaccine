@@ -78,7 +78,7 @@ def create_income_colors(chroma=0.8, luminance=0.65):
     }
 
 # Cargar los datos
-df_vaccine = pd.read_csv("Data/global-vaccination-coverage.csv")
+df_vaccine = pd.read_csv("global-vaccination-coverage.csv")
 
 # Para cada fila con NaN, intenta rellenar con el valor de la siguiente o anterior fila del mismo Entity
 df_vaccine_sorted = df_vaccine.sort_values(['Entity', 'Year']).reset_index(drop=True)
