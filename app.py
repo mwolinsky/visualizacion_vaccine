@@ -20,43 +20,19 @@ server = app.server
 
 # Función para generar colores con Chroma y Luminance uniformes
 def generate_uniform_colors(n_colors, chroma=0.7, luminance=0.6):
-    """
-    Genera n colores con Chroma (saturación) y Luminance (brillo) uniformes,
-    variando únicamente el Hue (tono).
-    
-    Parameters:
-    - n_colors: número de colores a generar
-    - chroma: saturación (0-1), donde 1 es máxima saturación
-    - luminance: brillo (0-1), donde 1 es máximo brillo
-    
-    Returns:
-    - Lista de colores en formato hexadecimal
-    """
     colors = []
-    
     for i in range(n_colors):
-        # Muestreo uniforme del Hue (0 a 360 grados)
         hue = i / n_colors
-        
-        # Convertir HSV a RGB (colorsys usa HSV donde S=chroma, V=luminance)
         r, g, b = colorsys.hsv_to_rgb(hue, chroma, luminance)
-        
-        # Convertir a valores 0-255 y luego a hexadecimal
         hex_color = '#{:02x}{:02x}{:02x}'.format(
             int(r * 255), 
             int(g * 255), 
             int(b * 255)
         )
         colors.append(hex_color)
-    
     return colors
 
 def create_income_colors_ordinal():
-    """
-    Escala divergente PuOr (Purple-Orange) con punto neutro beige
-    Usa naranja para Low, beige neutro para Middle, y púrpura para High
-    El beige es verdaderamente neutral y no interfiere con la progresión
-    """
     return {
         "Low income": "#e08214",     # Naranja medio
         "Middle income": "#d4c4a8",  # Beige neutro (perfecto punto medio)
@@ -64,13 +40,7 @@ def create_income_colors_ordinal():
     }
 
 def create_income_colors(chroma=0.8, luminance=0.65):
-    """
-    Genera colores específicos para los 3 niveles de ingresos
-    con Chroma y Luminance uniformes, distribuyendo el Hue uniformemente.
-    DEPRECADO: Mantenido para compatibilidad, usa create_income_colors_ordinal()
-    """
     colors = generate_uniform_colors(3, chroma, luminance)
-    
     return {
         "Low income": colors[0],     # Primer color del espectro (rojo)
         "Middle income": colors[1],  # Segundo color del espectro (verde)
@@ -125,9 +95,6 @@ df_pol3_top10['size'] = df_pol3_top10['Pol3 (% of one-year-olds immunized)']
 # Preparar datos para el análisis por región
 regiones_interes = ['Africa', 'Americas', 'Eastern Mediterranean', 'Europe', 'Micronesia', 'South-East Asia', 'Western Pacific']
 
-# --- CORRECCIÓN: Forzar que 'Europe' esté presente y bien escrita en los datos de regiones ---
-# A veces, por problemas de espacios o codificación, 'Europe' puede no coincidir exactamente.
-# Normalizamos los nombres de las entidades para asegurar coincidencia exacta.
 def normalize_region_name(name):
     if isinstance(name, str):
         return name.strip().replace('\u200b', '').replace('\xa0', ' ')
@@ -142,8 +109,6 @@ df_regions = df_vaccine[
     (df_vaccine['Code'].isna() | (df_vaccine['Code'] == '')) &
     (df_vaccine['Entity'].isin(regiones_interes_normalized))
 ].copy()
-
-# --- FIN CORRECCIÓN ---
 
 # Preparar datos para el análisis por nivel de ingresos
 income_entities = df_vaccine[df_vaccine['Entity'].str.contains('income', case=False, na=False)]
@@ -171,10 +136,8 @@ income_entities = income_entities.copy()
 income_entities['IncomeGroup'] = income_entities['Entity'].apply(income_group)
 income_grouped = income_entities.groupby(['Year', 'IncomeGroup'])[immun_cols].mean().reset_index()
 
-# Aplicar la escala de colores ordinal para niveles de ingresos
 income_colors = create_income_colors_ordinal()
 
-# Imprimir los colores generados para verificación
 print("Colores PuOr generados para niveles de ingresos:")
 for level, color in income_colors.items():
     print(f"{level}: {color}")
@@ -194,9 +157,9 @@ app.layout = html.Div([
     dcc.Tabs([
         dcc.Tab(label="Evolución de aplicación de Pol3 por País", children=[
             html.Div([
-                html.H3("💉 Evolución del % de inmunizados de Pol3 por país",
+                html.H3("Evolución del % de inmunizados de Pol3 por país",
                         style={'textAlign': 'center', 'marginTop': '20px', 'fontFamily': 'Inter, sans-serif'}),
-                html.P(""¿Cómo fue la evolución de la inmunización de los 10 países con menor cobertura en 1980?",
+                html.P("¿Cómo fue la evolución de la inmunización de los 10 países con menor cobertura en 1980?",
                        style={'textAlign': 'center', 'marginBottom': '20px', 'fontFamily': 'Inter, sans-serif', 'color': '#666'}),
                 html.Div([
                     dbc.Row([
@@ -236,7 +199,7 @@ app.layout = html.Div([
                 )
             ], style={'padding': '20px'})
         ]),
-        dcc.Tab(label="🌍 Análisis por Región", children=[
+        dcc.Tab(label="Análisis por Región", children=[
             html.Div([
                 html.H3("¿Cómo fue la evolución de la inmunización por región?",
                         style={'textAlign': 'center', 'marginTop': '20px', 'fontFamily': 'Inter, sans-serif'}),
@@ -270,7 +233,7 @@ app.layout = html.Div([
                 dcc.Graph(id='region-time-chart', style={'height': '600px'})
             ], style={'padding': '20px'})
         ]),
-        dcc.Tab(label="💸 Análisis por Nivel de Ingresos", children=[
+        dcc.Tab(label="Análisis por Nivel de Ingresos", children=[
             html.Div([
                 html.H3("Cobertura de Vacunación por Nivel de Ingresos",
                         style={'textAlign': 'center', 'marginTop': '20px'}),
@@ -337,23 +300,16 @@ def control_animation(play_clicks, pause_clicks, reset_clicks, n_intervals):
 
 _bubble_chart_cache = {}
 
-PASTEL_COLORS = [
-    '#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFD700', '#FFDFBA',
-    '#E0BBE4', '#FFC9DE', '#B5EAD7', '#C7CEEA', '#FFDAC1'
-]
+# Color único para bubbles y diamonds
+BUBBLE_DIAMOND_COLOR = "#1f77b4"  # Azul plotly por defecto
 
 def create_base_bubble_chart():
     global _bubble_chart_cache
     if 'base_fig' in _bubble_chart_cache:
-        return _bubble_chart_cache['base_fig'], _bubble_chart_cache['entity_colors']
-    primer_anio = int(df_pol3_top10['Year'].min())
-    entity_color_map = {}
-    for i, entity in enumerate(entity_order):
-        entity_color_map[entity] = PASTEL_COLORS[i % len(PASTEL_COLORS)]
+        return _bubble_chart_cache['base_fig']
     fig_base = go.Figure()
     _bubble_chart_cache['base_fig'] = fig_base
-    _bubble_chart_cache['entity_colors'] = entity_color_map
-    return fig_base, entity_color_map
+    return fig_base
 
 @app.callback(
     Output('bubble-chart', 'figure'),
@@ -363,68 +319,66 @@ def create_base_bubble_chart():
 def update_bubble_chart(selected_year):
     try:
         primer_anio = int(df_pol3_top10['Year'].min())
-        _, entity_color_map = create_base_bubble_chart()
+        create_base_bubble_chart()
         df_year = df_pol3_top10[df_pol3_top10['Year'] == selected_year]
         df_initial = df_pol3_top10[df_pol3_top10['Year'] == primer_anio]
-        bubble_x, bubble_y, bubble_colors, bubble_sizes = [], [], [], []
-        diamond_x, diamond_y, diamond_colors, diamond_sizes = [], [], [], []
-        entity_to_color = {}
-        for i, entity in enumerate(entity_order):
-            entity_to_color[entity] = entity_color_map.get(entity, PASTEL_COLORS[i % len(PASTEL_COLORS)])
+        bubble_x, bubble_y, bubble_sizes = [], [], []
+        diamond_x, diamond_y, diamond_sizes = [], [], []
         for entity in entity_order:
-            color = entity_to_color[entity]
             entity_data = df_year[df_year['Entity'] == entity]
             if not entity_data.empty:
                 bubble_x.append(entity)
                 pol3_value = entity_data['Pol3 (% of one-year-olds immunized)'].values[0]
                 bubble_y.append(pol3_value)
-                bubble_colors.append(color)
                 bubble_sizes.append(15 + (pol3_value / 100) * 15)
             entity_initial = df_initial[df_initial['Entity'] == entity]
             if not entity_initial.empty:
                 diamond_x.append(entity)
                 initial_pol3_value = entity_initial['Pol3 (% of one-year-olds immunized)'].values[0]
                 diamond_y.append(initial_pol3_value)
-                diamond_colors.append(color)
                 diamond_sizes.append(18 + (initial_pol3_value / 100) * 15)
         fig = go.Figure()
         for i, entity in enumerate(entity_order):
-            if entity in [bubble_x[j] for j in range(len(bubble_x))]:
-                bubble_idx = bubble_x.index(entity) if entity in bubble_x else None
-                diamond_idx = diamond_x.index(entity) if entity in diamond_x else None
-                color = entity_to_color[entity]
-                if bubble_idx is not None:
-                    fig.add_trace(go.Scatter(
-                        x=[bubble_x[bubble_idx]],
-                        y=[bubble_y[bubble_idx]],
-                        mode='markers',
-                        marker=dict(
-                            size=bubble_sizes[bubble_idx],
-                            color=color,
-                            sizemode='area',
-                            sizemin=8,
-                            line=dict(width=1, color='white')
-                        ),
-                        name=entity,
-                        showlegend=False,
-                        hovertemplate=f"<b>País:</b> {entity}<br><b>Año:</b> {selected_year}<br><b>Pol3 (%):</b> {bubble_y[bubble_idx]:.2f}<extra></extra>"
-                    ))
-                if diamond_idx is not None:
-                    fig.add_trace(go.Scatter(
-                        x=[diamond_x[diamond_idx]],
-                        y=[diamond_y[diamond_idx]],
-                        mode='markers',
-                        marker=dict(
-                            size=diamond_sizes[diamond_idx],
-                            color=color,
-                            symbol='diamond',
-                            line=dict(width=2, color="rgba(0,0,0,0.8)"),
-                            sizemode='area'
-                        ),
-                        name=f"{entity}_diamond",
-                        showlegend=False,
-                        hovertemplate=f"<b>País:</b> {entity}<br><b>Año inicial:</b> {primer_anio}<br><b>Pol3 (%):</b> {diamond_y[diamond_idx]:.2f}<extra></extra>"
-                    ))
+            if entity in bubble_x:
+                bubble_idx = bubble_x.index(entity)
+                fig.add_trace(go.Scatter(
+                    x=[bubble_x[bubble_idx]],
+                    y=[bubble_y[bubble_idx]],
+                    mode='markers',
+                    marker=dict(
+                        size=bubble_sizes[bubble_idx],
+                        color=BUBBLE_DIAMOND_COLOR,
+                        sizemode='area',
+                        sizemin=8,
+                        line=dict(width=1, color='white')
+                    ),
+                    name=entity,
+                    showlegend=False,
+                    hovertemplate=f"<b>País:</b> {entity}<br><b>Año:</b> {selected_year}<br><b>Pol3 (%):</b> {bubble_y[bubble_idx]:.2f}<extra></extra>"
+                ))
+            if entity in diamond_x:
+                diamond_idx = diamond_x.index(entity)
+                fig.add_trace(go.Scatter(
+                    x=[diamond_x[diamond_idx]],
+                    y=[diamond_y[diamond_idx]],
+                    mode='markers',
+                    marker=dict(
+                        size=diamond_sizes[diamond_idx],
+                        color=BUBBLE_DIAMOND_COLOR,
+                        symbol='diamond',
+                        line=dict(width=2, color="rgba(0,0,0,0.8)"),
+                        sizemode='area'
+                    ),
+                    name=f"{entity}_diamond",
+                    showlegend=False,
+                    hovertemplate=f"<b>País:</b> {entity}<br><b>Año inicial:</b> {primer_anio}<br><b>Pol3 (%):</b> {diamond_y[diamond_idx]:.2f}<extra></extra>"
+                ))
+        # Etiquetas grandes para los países en el eje x
+        fig.update_xaxes(
+            tickvals=entity_order,
+            ticktext=entity_order,
+            tickfont=dict(size=18, family="Inter, sans-serif", color="#2c3e50")
+        )
         fig.add_trace(go.Scatter(
             x=[None], y=[None],
             mode='markers',
@@ -446,16 +400,17 @@ def update_bubble_chart(selected_year):
                 font=dict(family="Inter, sans-serif", size=20, color="#2c3e50")
             ),
             xaxis=dict(
-                title=dict(text="País (ordenado de menor a mayor cobertura inicial)", font=dict(size=14)),
+                title=dict(text="País (ordenado de menor a mayor cobertura inicial)", font=dict(size=16)),
                 categoryorder='array',
                 categoryarray=entity_order,
                 showgrid=False,
                 showline=True,
                 linecolor="black",
-                mirror=False
+                mirror=False,
+                tickfont=dict(size=18, family="Inter, sans-serif", color="#2c3e50")
             ),
             yaxis=dict(
-                title=dict(text="% de inmunizados Pol3", font=dict(size=14)),
+                title=dict(text="% de inmunizados Pol3", font=dict(size=16)),
                 range=[0, 105],
                 showgrid=False,
                 showline=True,
@@ -474,16 +429,12 @@ def update_bubble_chart(selected_year):
                 title=dict(text="Tipo", font=dict(color="#757575")),
                 font=dict(color="#757575")
             ),
-            # Máxima optimización de rendimiento
             uirevision=f"year-{selected_year}",
             transition=dict(duration=300, easing="cubic-in-out"),
             showlegend=True
         )
-    
         return fig
-        
     except Exception as e:
-        # En caso de error, devolver un gráfico vacío con mensaje de error
         fig = go.Figure()
         fig.update_layout(
             title=f"Error al cargar datos: {str(e)}",
@@ -492,8 +443,6 @@ def update_bubble_chart(selected_year):
         )
         return fig
 
-# Callback para el gráfico de regiones con destacado (solo spaguetti)
-# Callback para el gráfico de regiones con destacado (solo spaguetti)
 @app.callback(
     Output('region-time-chart', 'figure'),
     [Input('region-vaccine-dropdown', 'value'),
@@ -502,17 +451,11 @@ def update_bubble_chart(selected_year):
 )
 def update_region_charts(selected_vaccine, highlight_region):
     try:
-        # Crear gráfico de líneas tipo spaguetti con destacado
         df_vaccine_filtered = df_regions.dropna(subset=[selected_vaccine]).copy()
-        
-        # Crear figura base
         fig2 = go.Figure()
-        
-        # Función para ajustar posiciones de etiquetas (mejorada)
         def adjust_positions(regions_data, min_distance=3):
             sorted_regions = sorted(regions_data.items(), key=lambda x: x[1])
             adjusted = {}
-            
             for i, (region, y_pos) in enumerate(sorted_regions):
                 if i == 0:
                     adjusted[region] = y_pos
@@ -523,43 +466,20 @@ def update_region_charts(selected_vaccine, highlight_region):
                     else:
                         adjusted[region] = y_pos
             return adjusted
-        
-        # Obtener posiciones finales para ajustar etiquetas
         final_positions = {}
         regions_with_data = []
-        
-        # Verificar todas las regiones disponibles en los datos filtrados
         available_regions = df_vaccine_filtered['Entity'].unique()
-        print(f"Regiones disponibles en datos: {available_regions}")
-        
-        # CORRECCIÓN: Verificar datos para todas las regiones incluyendo Europe
         for region in regiones_interes:
             region_data = df_vaccine_filtered[df_vaccine_filtered['Entity'] == region]
-            print(f"Verificando {region}: {len(region_data)} filas")
-            
             if not region_data.empty and len(region_data) > 0:
-                # Buscar el último valor válido (no NaN)
                 valid_values = region_data[selected_vaccine].dropna()
                 if len(valid_values) > 0:
                     final_val = valid_values.iloc[-1]
                     final_positions[region] = final_val
                     regions_with_data.append(region)
-                    print(f"{region}: {final_val:.1f}% (incluida)")
-                else:
-                    print(f"{region}: todos los valores son NaN (excluida)")
-            else:
-                print(f"{region}: sin datos (excluida)")
-        
-        print(f"Regiones con datos para {short_label(selected_vaccine)}: {regions_with_data}")
-        
-        # Ajustar posiciones de etiquetas
         adjusted_positions = adjust_positions(final_positions, min_distance=3)
-        
-        # Dibujar líneas solo para regiones con datos
         for region in regions_with_data:
             region_data = df_vaccine_filtered[df_vaccine_filtered['Entity'] == region]
-            
-            # Estilos condicionales
             if region == highlight_region:
                 color = '#ff7f0e'
                 width = 3
@@ -570,8 +490,6 @@ def update_region_charts(selected_vaccine, highlight_region):
                 width = 2
                 opacity = 0.6
                 zorder = 2
-            
-            # Agregar línea
             fig2.add_trace(go.Scatter(
                 x=region_data['Year'],
                 y=region_data[selected_vaccine],
@@ -582,15 +500,11 @@ def update_region_charts(selected_vaccine, highlight_region):
                 showlegend=False,
                 hovertemplate=f"<b>Región:</b> {region}<br><b>Año:</b> %{{x}}<br><b>{short_label(selected_vaccine)} (%):</b> %{{y:.2f}}<extra></extra>"
             ))
-            
-            # CORRECCIÓN: Mejorar la adición de etiquetas
             if region in adjusted_positions:
                 x_final = region_data['Year'].max()
                 y_original = region_data[region_data['Year'] == x_final][selected_vaccine].iloc[0]
                 y_adjusted = adjusted_positions[region]
-                x_text = x_final + 0.8  # Más espacio para las etiquetas
-                
-                # Línea conectora si la posición se ajustó significativamente
+                x_text = x_final + 0.8
                 if abs(y_adjusted - y_original) > 3:
                     fig2.add_trace(go.Scatter(
                         x=[x_final, x_text - 0.3],
@@ -601,12 +515,8 @@ def update_region_charts(selected_vaccine, highlight_region):
                         showlegend=False,
                         hoverinfo='skip'
                     ))
-                
-                # Texto de la etiqueta - CORRECCIÓN: Asegurar que todas las regiones tengan etiqueta
                 text_color = color if region == highlight_region else '#666666'
                 text_size = 13 if region == highlight_region else 11
-                text_weight = 'bold' if region == highlight_region else 'normal'
-                
                 fig2.add_annotation(
                     x=x_text,
                     y=y_adjusted,
@@ -620,24 +530,8 @@ def update_region_charts(selected_vaccine, highlight_region):
                     xanchor='left',
                     yanchor='middle'
                 )
-        
-        # CORRECCIÓN: Verificar específicamente Europe y forzar su inclusión si tiene datos
-        europe_debug = df_regions[df_regions['Entity'] == 'Europe']
-        if not europe_debug.empty:
-            europe_vaccine_data = europe_debug.dropna(subset=[selected_vaccine])
-            if not europe_vaccine_data.empty:
-                print(f"Europe tiene {len(europe_vaccine_data)} registros válidos para {selected_vaccine}")
-                if 'Europe' not in regions_with_data:
-                    print("ADVERTENCIA: Europe tiene datos pero no se incluyó en regions_with_data")
-            else:
-                print(f"Europe no tiene datos válidos para {selected_vaccine}")
-        else:
-            print("Europe no se encuentra en df_regions")
-        
-        # Configurar layout del gráfico
         x_min = df_vaccine_filtered['Year'].min()
         x_max = df_vaccine_filtered['Year'].max()
-        
         fig2.update_layout(
             title=dict(
                 text=f"Evolución temporal de la cobertura de {short_label(selected_vaccine)} por región",
@@ -645,7 +539,7 @@ def update_region_charts(selected_vaccine, highlight_region):
             ),
             xaxis=dict(
                 title=dict(text='Año', font=dict(size=14)),
-                range=[x_min, x_max + 5],  # Más espacio para etiquetas
+                range=[x_min, x_max + 5],
                 showgrid=False,
                 showline=True,
                 linecolor="black",
@@ -663,17 +557,14 @@ def update_region_charts(selected_vaccine, highlight_region):
             paper_bgcolor="white",
             font=dict(family="Inter, sans-serif"),
             height=500,
-            margin=dict(r=120)  # Más espacio para las etiquetas
+            margin=dict(r=120)
         )
-    
         return fig2
-        
     except Exception as e:
-        # En caso de error, devolver gráfico vacío con mensaje de error
         fig = go.Figure()
         fig.update_layout(title=f"Error al cargar datos: {str(e)}", height=600)
         return fig
-# Callback para los botones de seleccionar/deseleccionar todas las vacunas
+
 @app.callback(
     Output('income-vaccine-dropdown', 'value'),
     [Input('select-all', 'n_clicks'),
@@ -682,15 +573,12 @@ def update_region_charts(selected_vaccine, highlight_region):
 )
 def update_dropdown(select_all_clicks, deselect_all_clicks):
     triggered_id = ctx.triggered_id if ctx.triggered_id else 'No clicks yet'
-    
     if triggered_id == 'select-all':
         return immun_labels
     elif triggered_id == 'deselect-all':
         return []
-    
     return immun_labels[:3]
 
-# Callback para el gráfico de ingresos
 @app.callback(
     Output('income-chart', 'figure'),
     [Input('income-vaccine-dropdown', 'value'),
@@ -700,7 +588,6 @@ def update_dropdown(select_all_clicks, deselect_all_clicks):
 def update_income_chart(selected_vaccines, selected_year):
     try:
         if not selected_vaccines:
-            # Si no hay vacunas seleccionadas, mostrar gráfico vacío
             fig = go.Figure()
             fig.update_layout(
                 title=f"Selecciona al menos una vacuna para visualizar los datos ({selected_year})",
@@ -713,14 +600,11 @@ def update_income_chart(selected_vaccines, selected_year):
                 yaxis=dict(showgrid=False)
             )
             return fig
-        
         data = []
         df_year = income_grouped[income_grouped['Year'] == selected_year]
-        
         for group in ["High income", "Middle income", "Low income"]:
             x_vals = []
             y_vals = []
-            
             for vaccine_label in selected_vaccines:
                 if vaccine_label in label_to_col:
                     vaccine_col = label_to_col[vaccine_label]
@@ -729,15 +613,13 @@ def update_income_chart(selected_vaccines, selected_year):
                         val = group_data[vaccine_col].values[0]
                         x_vals.append(vaccine_label)
                         y_vals.append(val)
-            
-            if x_vals:  # Solo agregar si hay datos
+            if x_vals:
                 data.append(go.Bar(
                     x=x_vals,
                     y=y_vals,
                     name=group,
                     marker_color=income_colors[group]
                 ))
-        
         fig = go.Figure(data=data)
         fig.update_layout(
             barmode="group",
@@ -760,11 +642,8 @@ def update_income_chart(selected_vaccines, selected_year):
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=False)
         )
-        
         return fig
-        
     except Exception as e:
-        # En caso de error, devolver un gráfico vacío con mensaje de error
         fig = go.Figure()
         fig.update_layout(
             title=f"Error al cargar datos: {str(e)}",
