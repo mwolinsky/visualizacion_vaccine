@@ -192,11 +192,11 @@ app.layout = html.Div([
     ], style={'backgroundColor': '#f8f9fa', 'padding': '30px 20px', 'marginBottom': '20px'}),
     
     dcc.Tabs([
-        dcc.Tab(label="Evolución Pol3 por País", children=[
+        dcc.Tab(label="Evolución de aplicación de Pol3 por País", children=[
             html.Div([
-                html.H3("Evolución del % de inmunizados de Pol3 por país",
+                html.H3("💉 Evolución del % de inmunizados de Pol3 por país",
                         style={'textAlign': 'center', 'marginTop': '20px', 'fontFamily': 'Inter, sans-serif'}),
-                html.P("Este gráfico muestra la evolución de la cobertura de la vacuna Pol3 para los 10 países con menor cobertura en el año inicial. Los diamantes representan valores iniciales.",
+                html.P(""¿Cómo fue la evolución de la inmunización de los 10 países con menor cobertura en 1980?",
                        style={'textAlign': 'center', 'marginBottom': '20px', 'fontFamily': 'Inter, sans-serif', 'color': '#666'}),
                 html.Div([
                     dbc.Row([
@@ -236,11 +236,11 @@ app.layout = html.Div([
                 )
             ], style={'padding': '20px'})
         ]),
-        dcc.Tab(label="Análisis por Región", children=[
+        dcc.Tab(label="🌍 Análisis por Región", children=[
             html.Div([
-                html.H3("Evolución Temporal por Región",
+                html.H3("¿Cómo fue la evolución de la inmunización por región?",
                         style={'textAlign': 'center', 'marginTop': '20px', 'fontFamily': 'Inter, sans-serif'}),
-                html.P("La región destacada aparece en color, las demás en gris para facilitar la comparación.",
+                html.P("La región destacada aparece en color, el resto en gris.",
                        style={'textAlign': 'center', 'color': '#666', 'fontFamily': 'Inter, sans-serif', 'marginBottom': '30px'}),
                 html.Div([
                     dbc.Row([
@@ -270,7 +270,7 @@ app.layout = html.Div([
                 dcc.Graph(id='region-time-chart', style={'height': '600px'})
             ], style={'padding': '20px'})
         ]),
-        dcc.Tab(label="Análisis por Nivel de Ingresos", children=[
+        dcc.Tab(label="💸 Análisis por Nivel de Ingresos", children=[
             html.Div([
                 html.H3("Cobertura de Vacunación por Nivel de Ingresos",
                         style={'textAlign': 'center', 'marginTop': '20px'}),
